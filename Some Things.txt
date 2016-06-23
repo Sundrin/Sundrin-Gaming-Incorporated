@@ -2,3 +2,5 @@ So I've created a new repository here and added you as a collaborator. It might 
 
 I've started a temporary folder and I'm adding files that I think could be and interesting piece to the game.
 http://phaser.io/examples/v2/tilemaps/create-from-objects I figured would be a fantastic starter to creating the game. I've uploaded some assets to this thing so we can kind of do our own thing with it.
+
+I was able to make this "starter" work in a browser, I'll get back to coding things later on...
