@@ -4,3 +4,5 @@ I've started a temporary folder and I'm adding files that I think could be and i
 http://phaser.io/examples/v2/tilemaps/create-from-objects I figured would be a fantastic starter to creating the game. I've uploaded some assets to this thing so we can kind of do our own thing with it.
 
 I was able to make this "starter" work in a browser, I'll get back to coding things later on...
+
+I had the idea to turn that arrow sprite into an actual character give him some physics, health and stamina attributes, and some sort of weapon, as well as enemies. Afterwards, we can think about designing new levels/worlds. I'm not sure about this whole maze generation thing, I kind of just want to premake the levels.
