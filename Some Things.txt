@@ -6,3 +6,5 @@ http://phaser.io/examples/v2/tilemaps/create-from-objects I figured would be a f
 I was able to make this "starter" work in a browser, I'll get back to coding things later on...
 
 I had the idea to turn that arrow sprite into an actual character give him some physics, health and stamina attributes, and some sort of weapon, as well as enemies. Afterwards, we can think about designing new levels/worlds. I'm not sure about this whole maze generation thing, I kind of just want to premake the levels.
+
+If Griffin is cool with us premaking the levels, I'm down. He still hasn't even updated the assignment to say what exactly he even wants so I'm not sure what to do lol I don't want to start making a character and everything if we just end up trashing it you know?
