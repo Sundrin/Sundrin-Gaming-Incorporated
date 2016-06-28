@@ -1,38 +1,24 @@
-var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'phaser-example', { preload: preload, create: create, update: update, render: render });
-
-function preload() {
-
-    game.load.tilemap('map', 'assets/tilemaps/maps/features_test.json', null, Phaser.Tilemap.TILED_JSON);
-
-    game.load.image('ground_1x1', 'assets/tilemaps/tiles/ground_1x1.png');
-    game.load.image('walls_1x2', 'assets/tilemaps/tiles/walls_1x2.png');
-    game.load.image('tiles2', 'assets/tilemaps/tiles/tiles2.png');
-
-    game.load.image('phaser', 'assets/sprites/arrow.png');
-    game.load.spritesheet('coin', 'assets/sprites/coin.png', 32, 32);
-
-}
+var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'phaser-example', {create: create, update: update});
 
 var cursors;
 var map;
 var coins;
-
 var layer;
 var sprite;
 
 function create() {
 
-    map = game.add.tilemap('map');
+    // this.map = game.add.tilemap('map');
 
-    map.addTilesetImage('ground_1x1');
-    map.addTilesetImage('walls_1x2');
-    map.addTilesetImage('tiles2');
+    // map.addTilesetImage('ground_1x1');
+    // map.addTilesetImage('walls_1x2');
+    // map.addTilesetImage('tiles2');
 
-    map.setCollisionBetween(1, 12);
+    // map.setCollisionBetween(1, 12);
 
-    layer = map.createLayer('Tile Layer 1');
+    // layer = map.createLayer('Tile Layer 1');
 
-    layer.resizeWorld();
+    // layer.resizeWorld();
 
     game.physics.startSystem(Phaser.Physics.ARCADE);
 
@@ -41,7 +27,7 @@ function create() {
     coins.enableBody = true;
 
     //  And now we convert all of the Tiled objects with an ID of 34 into sprites within the coins group
-    map.createFromObjects('Object Layer 1', 34, 'coin', 0, true, false, coins);
+    //map.createFromObjects('Object Layer 1', 34, 'coin', 0, true, false, coins);
 
     //  Add animations to all of the coin sprites
     coins.callAll('animations.add', 'animations', 'spin', [0, 1, 2, 3, 4, 5], 10, true);
@@ -95,11 +81,5 @@ function update() {
 function collectCoin(player, coin) {
 
     coin.kill();
-
-}
-
-function render() {
-
-    game.debug.body(sprite);
 
 }
