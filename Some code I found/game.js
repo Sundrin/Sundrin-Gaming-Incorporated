@@ -1,172 +1,243 @@
-var Dungeon = {
-    map: null,
-    map_size: 64,
-    rooms: [],
-    Generate: function () {
-        this.map = [];
-        for (var x = 0; x < this.map_size; x++) {
-            this.map[x] = [];
-            for (var y = 0; y < this.map_size; y++) {
-                this.map[x][y] = 0;
-            }
-        }
+// font size
+var FONT = 32;
 
-        var room_count = Helpers.GetRandom(10, 20);
-        var min_size = 5;
-        var max_size = 15;
+// map dimensions
+var ROWS = 10;
+var COLS = 15;
 
-        for (var i = 0; i < room_count; i++) {
-            var room = {};
+// number of actors per level, including player
+var ACTORS = 10;
 
-            room.x = Helpers.GetRandom(1, this.map_size - max_size - 1);
-            room.y = Helpers.GetRandom(1, this.map_size - max_size - 1);
-            room.w = Helpers.GetRandom(min_size, max_size);
-            room.h = Helpers.GetRandom(min_size, max_size);
+// the structure of the map
+var map;
 
-            if (this.DoesCollide(room)) {
-                i--;
-                continue;
-            }
-            room.w--;
-            room.h--;
+// the ascii display, as a 2d array of characters
+var asciidisplay;
 
-            this.rooms.push(room);
-        }
+// a list of all actors, 0 is the player
+var player;
+var actorList;
+var livingEnemies;
 
-        this.SquashRooms();
+// points to each actor in its position, for quick searching
+var actorMap;
 
-        for (i = 0; i < room_count; i++) {
-            var roomA = this.rooms[i];
-            var roomB = this.FindClosestRoom(roomA);
+// initialize phaser, call create() once done
+var game = new Phaser.Game(COLS * FONT * 0.6, ROWS * FONT, Phaser.AUTO, null, {
+	create: create
+});
 
-            pointA = {
-                x: Helpers.GetRandom(roomA.x, roomA.x + roomA.w),
-                y: Helpers.GetRandom(roomA.y, roomA.y + roomA.h)
-            };
-            pointB = {
-                x: Helpers.GetRandom(roomB.x, roomB.x + roomB.w),
-                y: Helpers.GetRandom(roomB.y, roomB.y + roomB.h)
-            };
+function create() {
+	// init keyboard commands
+	game.input.keyboard.addCallbacks(null, null, onKeyUp);
 
-            while ((pointB.x != pointA.x) || (pointB.y != pointA.y)) {
-                if (pointB.x != pointA.x) {
-                    if (pointB.x > pointA.x) pointB.x--;
-                    else pointB.x++;
-                } else if (pointB.y != pointA.y) {
-                    if (pointB.y > pointA.y) pointB.y--;
-                    else pointB.y++;
-                }
+	// initialize map
+	initMap();
 
-                this.map[pointB.x][pointB.y] = 1;
-            }
-        }
+	// initialize ascii display
+	asciidisplay = [];
+	for (var y = 0; y < ROWS; y++) {
+		var newRow = [];
+		asciidisplay.push(newRow);
+		for (var x = 0; x < COLS; x++)
+			newRow.push(initCell('', x, y));
+	}
 
-        for (i = 0; i < room_count; i++) {
-            var room = this.rooms[i];
-            for (var x = room.x; x < room.x + room.w; x++) {
-                for (var y = room.y; y < room.y + room.h; y++) {
-                    this.map[x][y] = 1;
-                }
-            }
-        }
+	// initialize actors
+	initActors();
 
-        for (var x = 0; x < this.map_size; x++) {
-            for (var y = 0; y < this.map_size; y++) {
-                if (this.map[x][y] == 1) {
-                    for (var xx = x - 1; xx <= x + 1; xx++) {
-                        for (var yy = y - 1; yy <= y + 1; yy++) {
-                            if (this.map[xx][yy] == 0) this.map[xx][yy] = 2;
-                        }
-                    }
-                }
-            }
-        }
-    },
-    FindClosestRoom: function (room) {
-        var mid = {
-            x: room.x + (room.w / 2),
-            y: room.y + (room.h / 2)
-        };
-        var closest = null;
-        var closest_distance = 1000;
-        for (var i = 0; i < this.rooms.length; i++) {
-            var check = this.rooms[i];
-            if (check == room) continue;
-            var check_mid = {
-                x: check.x + (check.w / 2),
-                y: check.y + (check.h / 2)
-            };
-            var distance = Math.min(Math.abs(mid.x - check_mid.x) - (room.w / 2) - (check.w / 2), Math.abs(mid.y - check_mid.y) - (room.h / 2) - (check.h / 2));
-            if (distance < closest_distance) {
-                closest_distance = distance;
-                closest = check;
-            }
-        }
-        return closest;
-    },
-    SquashRooms: function () {
-        for (var i = 0; i < 10; i++) {
-            for (var j = 0; j < this.rooms.length; j++) {
-                var room = this.rooms[j];
-                while (true) {
-                    var old_position = {
-                        x: room.x,
-                        y: room.y
-                    };
-                    if (room.x > 1) room.x--;
-                    if (room.y > 1) room.y--;
-                    if ((room.x == 1) && (room.y == 1)) break;
-                    if (this.DoesCollide(room, j)) {
-                        room.x = old_position.x;
-                        room.y = old_position.y;
-                        break;
-                    }
-                }
-            }
-        }
-    },
-    DoesCollide: function (room, ignore) {
-        for (var i = 0; i < this.rooms.length; i++) {
-            if (i == ignore) continue;
-            var check = this.rooms[i];
-            if (!((room.x + room.w < check.x) || (room.x > check.x + check.w) || (room.y + room.h < check.y) || (room.y > check.y + check.h))) return true;
-        }
-
-        return false;
-    }
+	// draw level
+	drawMap();
+	drawActors();
 }
 
-var Renderer = {
-    canvas: null,
-    ctx: null,
-    size: 512,
-    scale: 0,
-    Initialize: function () {
-        this.canvas = document.getElementById('canvas');
-        this.canvas.width = this.size;
-        this.canvas.height = this.size;
-        this.ctx = canvas.getContext('2d');
-        this.scale = this.canvas.width / Dungeon.map_size;
-    },
-    Update: function () {
-        for (var y = 0; y < Dungeon.map_size; y++) {
-            for (var x = 0; x < Dungeon.map_size; x++) {
-                var tile = Dungeon.map[x][y];
-                if (tile == 0) this.ctx.fillStyle = '#351330';
-                else if (tile == 1) this.ctx.fillStyle = '#64908A';
-                else this.ctx.fillStyle = '#424254';
-                this.ctx.fillRect(x * this.scale, y * this.scale, this.scale, this.scale);
-            }
-        }
-    }
-};
+function initCell(chr, x, y) {
+	// add a single cell in a given position to the ascii display
+	var style = {
+		font: FONT + "px monospace",
+		fill: "#fff"
+	};
+	return game.add.text(FONT * 0.6 * x, FONT * y, chr, style);
+}
 
-var Helpers = {
-    GetRandom: function (low, high) {
-        return~~ (Math.random() * (high - low)) + low;
-    }
-};
+function initMap() {
+	// create a new random map
+	map = [];
+	for (var y = 0; y < ROWS; y++) {
+		var newRow = [];
+		for (var x = 0; x < COLS; x++) {
+			if (Math.random() > 0.8) 
+				newRow.push('#');
+			else 
+				newRow.push('.');
+		}
+		map.push(newRow);
+	}
+}
 
-Dungeon.Generate();
-Renderer.Initialize();
-Renderer.Update(Dungeon.map);
+function drawMap() {
+	for (var y = 0; y < ROWS; y++)
+		for (var x = 0; x < COLS; x++)
+			asciidisplay[y][x].content = map[y][x];
+}
+
+function randomInt(max) {
+	return Math.floor(Math.random() * max);
+}
+
+function initActors() {
+	// create actors at random locations
+	actorList = [];
+	actorMap = {};
+	for (var e = 0; e < ACTORS; e++) {
+		// create new actor
+		var actor = {
+			x: 0,
+			y: 0,
+			hp: e == 0 ? 3 : 1
+		};
+		do {
+			// pick a random position that is both a floor and not occupied
+			actor.y = randomInt(ROWS);
+			actor.x = randomInt(COLS);
+		} while (map[actor.y][actor.x] == '#' || actorMap[actor.y + "_" + actor.x] != null);
+
+		// add references to the actor to the actors list & map
+		actorMap[actor.y + "_" + actor.x] = actor;
+		actorList.push(actor);
+	}
+
+	// the player is the first actor in the list
+	player = actorList[0];
+	livingEnemies = ACTORS - 1;
+}
+
+function drawActors() {
+	for (var a in actorList) {
+		if (actorList[a] != null && actorList[a].hp > 0) 
+			asciidisplay[actorList[a].y][actorList[a].x].content = a == 0 ? '' + player.hp : 'e';
+	}
+}
+
+function canGo(actor,dir) {
+	return 	actor.x+dir.x >= 0 &&
+			actor.x+dir.x <= COLS - 1 &&
+			actor.y+dir.y >= 0 &&
+			actor.y+dir.y <= ROWS - 1 &&
+			map[actor.y+dir.y][actor.x +dir.x] == '.';
+}
+
+function moveTo(actor, dir) {
+	// check if actor can move in the given direction
+	if (!canGo(actor,dir)) 
+		return false;
+	
+	// moves actor to the new location
+	var newKey = (actor.y + dir.y) +'_' + (actor.x + dir.x);
+	// if the destination tile has an actor in it 
+	if (actorMap[newKey] != null) {
+		//decrement hitpoints of the actor at the destination tile
+		var victim = actorMap[newKey];
+		victim.hp--;
+		
+		// if it's dead remove its reference 
+		if (victim.hp == 0) {
+			actorMap[newKey]= null;
+			actorList[actorList.indexOf(victim)]=null;
+			if(victim!=player) {
+				livingEnemies--;
+				if (livingEnemies == 0) {
+					// victory message
+					var victory = game.add.text(game.world.centerX, game.world.centerY, 'Victory!\nCtrl+r to restart', { fill : '#2e2', align: "center" } );
+					victory.anchor.setTo(0.5,0.5);
+				}
+			}
+		}
+	} else {
+		// remove reference to the actor's old position
+		actorMap[actor.y + '_' + actor.x]= null;
+		
+		// update position
+		actor.y+=dir.y;
+		actor.x+=dir.x;
+
+		// add reference to the actor's new position
+		actorMap[actor.y + '_' + actor.x]=actor;
+	}
+	return true;
+}
+
+function onKeyUp(event) {
+	// draw map to overwrite previous actors positions
+	drawMap();
+	
+	// act on player input
+	var acted = false;
+	switch (event.keyCode) {
+		case Phaser.Keyboard.LEFT:
+			acted = moveTo(player, {x:-1, y:0});
+			break;
+			
+		case Phaser.Keyboard.RIGHT:
+			acted = moveTo(player,{x:1, y:0});
+			break;
+			
+		case Phaser.Keyboard.UP:
+			acted = moveTo(player, {x:0, y:-1});
+			break;
+
+		case Phaser.Keyboard.DOWN:
+			acted = moveTo(player, {x:0, y:1});
+			break;
+	}
+	
+	// enemies act every time the player does
+	if (acted)
+		for (var enemy in actorList) {
+			// skip the player
+			if(enemy==0)
+				continue;
+			
+			var e = actorList[enemy];
+			if (e != null)
+				aiAct(e);
+		}
+	
+	// draw actors in new positions
+	drawActors();
+}
+
+function aiAct(actor) {
+	var directions = [ { x: -1, y:0 }, { x:1, y:0 }, { x:0, y: -1 }, { x:0, y:1 } ];	
+	var dx = player.x - actor.x;
+	var dy = player.y - actor.y;
+	
+	// if player is far away, walk randomly
+	if (Math.abs(dx) + Math.abs(dy) > 6)
+		// try to walk in random directions until you succeed once
+		while (!moveTo(actor, directions[randomInt(directions.length)])) { };
+	
+	// otherwise walk towards player
+	if (Math.abs(dx) > Math.abs(dy)) {
+		if (dx < 0) {
+			// left
+			moveTo(actor, directions[0]);
+		} else {
+			// right
+			moveTo(actor, directions[1]);
+		}
+	} else {
+		if (dy < 0) {
+			// up
+			moveTo(actor, directions[2]);
+		} else {
+			// down
+			moveTo(actor, directions[3]);
+		}
+	}
+	if (player.hp < 1) {
+		// game over message
+		var gameOver = game.add.text(game.world.centerX, game.world.centerY, 'Game Over\nCtrl+r to restart', { fill : '#e22', align: "center" } );
+		gameOver.anchor.setTo(0.5,0.5);
+	}
+}
